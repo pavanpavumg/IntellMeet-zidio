@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: intell-meet-db
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - mongodb_data:/data/db
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: intell-meet-backend
+    ports:
+      - "8000:8000"
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://admin:password@mongodb:27017/intell-meet
+      JWT_SECRET: ${JWT_SECRET}
+      GOOGLE_GENERATIVE_AI_KEY: ${GOOGLE_GENERATIVE_AI_KEY}
+      LIVEKIT_URL: ${LIVEKIT_URL}
+      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY}
+      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET}
+    depends_on:
+      - mongodb
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: intell-meet-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_URL: http://backend:8000
+    depends_on:
+      - backend
+
+volumes:
+  mongodb_data:
